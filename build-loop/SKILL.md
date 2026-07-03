@@ -111,7 +111,15 @@ from Step 1. If a row is skipped, record a one-line waiver with the reason in
 | …-DOCKER  | Write `Dockerfile` and `docker-compose.yml` | Any service |
 | …-RUNNER  | Write `start-all.sh` with CTRL+C cleanup | Multiple processes |
 | …-E2E     | Write E2E test suite (Playwright for web; stack equivalent otherwise) | Any user-facing behaviour |
+| …-HARNESS | Tracer bullet for the E2E harness: launch the scaffold app under the real test driver, query one element, take one screenshot, terminate cleanly | Any E2E task whose driver automates a real app/UI (XCUITest, Appium, desktop Playwright) |
 | …-OTEL    | Wire OTEL tracing and structured logging | Any long-running service |
+
+The `…-HARNESS` task is scheduled immediately after the scaffold task — never
+adjacent to `…-E2E`. Launch-context problems (sandboxed test runners, TCC,
+headless displays, window managers) are environment work that can dwarf the app
+itself; discover them while the app is a stub, not after every feature is
+stacked on top. Browser Playwright against a local web server is exempt — its
+harness has no launch-context risk worth a task.
 
 Schema tasks (`…-SCHEMA`) must be assigned IDs that precede all implementation tasks
 on either side of that boundary. Likewise, wireframe tasks (`…-WIREFRAME`) must
@@ -230,10 +238,21 @@ FAIL   T007 — missing field-level DTO examples
 **On FAIL** → classify the failure before spending budget:
 
 1. **Environment failure** (port in use, container not up, missing dependency) —
-   does not consume budget. Fix the environment and re-run. Two consecutive
-   environment failures on the same task → stop retrying this task; fix or reopen
-   the environment task (`…-DOCKER` / `…-RUNNER`) instead, and log a `redirect`
-   trace event. When unsure whether a failure is environmental, it isn't — count it.
+   does not consume `Retries`, but is NOT unbounded. Fix the environment and
+   re-run. Two consecutive environment failures on the same task → stop retrying
+   this task; fix or reopen the environment task (`…-DOCKER` / `…-RUNNER` /
+   `…-HARNESS`) instead, and log a `redirect` trace event. If no environment
+   task covers the broken subsystem, create one at the end of `TASKS.md` and
+   work it there — never debug an unnamed subsystem inline. Log an `env_fix`
+   trace event per attempt (hypothesis + result, one line each). **Hard cap: 5
+   `env_fix` attempts on one subsystem without a confirmed root cause → park
+   it** — record what's known in the environment task's Notes, defer every
+   verification that needs it, continue other tasks, and batch the deferred
+   verifications when the environment allows (idle machine, fresh CI runner,
+   after human input). Environment archaeology compounds silently: it produced
+   a 2-hour, ~40-attempt detour in one traced run while the trace file showed
+   two events. When unsure whether a failure is environmental, it isn't —
+   count it.
 2. **Stall check** — compare against the previous attempt's failure signature
    (failing test + error class). Same signature twice in a row → escalate
    immediately, even with budget remaining. More attempts won't help; a human might.
@@ -383,7 +402,9 @@ until the OpenAPI / JSON Schema task is done and reviewed.
 
 **Traces feed improvement.** Every run appends events to `_traces/` (gitignored) —
 that log is how the loop's own weaknesses get found and fixed. Don't skip trace
-writes.
+writes, and write each event **when it happens**, not batched at commit time —
+batched writes collapse timestamps and hide exactly the expensive stretches
+(env debugging, stalls) the traces exist to expose.
 
 **Abstractions are earned.** Configuration over generics over templates over
 duplication, and only at the third occurrence — the Rule of Three. Domain code
@@ -432,6 +453,24 @@ startup otherwise orphans the processes already launched — see
 **E2E needs a running stack.** Start `start-all.sh` (or the compose stack) and wait
 on health endpoints before running E2E tests, or every test fails with connection
 refused.
+
+**UI automation needs an idle machine.** Desktop/mobile UI suites (XCUITest and
+kin) share keyboard focus, Spaces, and the window server with the human using
+the machine — running them while the user is typing produces a *different*
+random failure set each run. Gate suite runs on input idleness (e.g. macOS
+`HIDIdleTime` ≥ 3 min, retry loop in the background) and treat "fails as a
+suite, passes individually" as this environment signature, not as flaky code.
+For macOS specifics (sandboxed runners, launch context, screenshots), see the
+`macos-app-automation` skill.
+
+**Worktree fan-out leaves build debris.** Parallel agents that each build the
+same app register duplicate bundles (LaunchServices on macOS, similar caches
+elsewhere) and stale build products that later resolve *instead of* the real
+one — "passing" runs may be exercising an agent's outdated copy. After merging
+a worktree batch: delete the worktrees, delete/unregister their build products,
+and never resolve an app by bundle id in tests. Also `git rm --cached` guard:
+add `.claude/worktrees/` to `.gitignore` before the first fan-out or a later
+`git add -A` commits embedded repos.
 
 **"Interrupt to revise" is not a pause.** After announcing a phase transition,
 continue immediately in the same turn. The user interrupts if they disagree; waiting

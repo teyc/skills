@@ -22,28 +22,78 @@ culprit. `/usr/bin/open` disclaims responsibility, so it escapes.
 - ❌ `"$APP/Contents/MacOS/Binary" &` — windowless app
 - ❌ `NSWorkspace.openApplication` *from the test runner* — still tainted
 
+## The runner is App-Sandboxed — unconditionally (Xcode 26)
+
+`GlassCRMUITests-Runner.app` carries `com.apple.security.app-sandbox = true`
+no matter what; `ENABLE_APP_SANDBOX = NO` on the test target does **not**
+remove it (verify: `codesign -d --entitlements - <Runner.app>`). This is the
+root cause behind everything the runner "mysteriously" can't do:
+
+- `open --env VAR=x` from the runner: **silently dropped**.
+- `open <app> --args --flag` from the runner: **also silently dropped**
+  (works fine from a normal shell — do not trust a shell test to validate
+  the runner path).
+- Files written by the runner (`/tmp/...`): redirected into its container
+  (`~/Library/Containers/<runner-id>/Data/...`) — the app never sees them,
+  and `FileManager` inside the runner reports success.
+
 ## XCUITest harness pattern
 
 Never call `app.launch()`. Instead:
-1. Test shells out to `/usr/bin/open <app> --args <flags>` via `Process`.
-2. Attach with `XCUIApplication(bundleIdentifier:)` + `activate()`.
-3. For relaunch tests (persistence), `app.terminate()` then re-`open`.
+1. Test shells out to `/usr/bin/open <exact-app-path>` via `Process`
+   (path-launch first, so the right binary runs).
+2. Attach with `XCUIApplication(bundleIdentifier:)`, wait for
+   `.runningForeground`, then `activate()`.
+3. Deliver test config with a second `open "myapp://test-setup?store=…&reset=1&seed=1"`
+   — a **custom URL scheme is the one channel sandboxing permits**. Register
+   it in Info.plist (`CFBundleURLTypes`), handle in `.onOpenURL`, wrap the
+   handler in `#if DEBUG`. Runtime store swap = hold the `ModelContainer` in
+   `@State` and rebuild it in the handler.
+4. For relaunch tests (persistence), `app.terminate()` then re-`open`.
 
-## Pass config as `--args`, not `--env`
+Keep `--args`/`--env` parsing in the app anyway — they work from normal
+shells and are handy for manual/demo launches (each env var needs its own
+`--env` flag; `open --env A=1 B=2` treats `B=2` as a document to open).
 
-`open --env VAR=x` is **silently dropped** when the caller is a test
-runner. `open <app> --args --my-flag value` always arrives in
-`ProcessInfo.processInfo.arguments`. Also: each env var needs its own
-`--env` flag — `open --env A=1 B=2` treats `B=2` as a document to open.
-Support both in the app (args override env).
+## Windows on inactive Spaces are invisible to XCUITest
+
+If the user is in another Space (fullscreen VS Code counts), the AUT's
+window exists (`CGWindowList` shows `onscreen=false`) but the AX snapshot
+has **no Window element** — queries fail as if the app were windowless.
+Test-mode fix in the app (behind the URL-scheme `front=1` flag):
+
+```swift
+window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+window.orderFrontRegardless()
+NSApp.activate(ignoringOtherApps: true)
+```
+
+## Suites need an idle machine
+
+A human typing on the machine contends with XCUITest for keyboard focus and
+Spaces: the suite fails with a *different* random subset each run while
+every test passes individually — that pattern IS this diagnosis. Gate suite
+runs on `HIDIdleTime` ≥ ~3 min:
+
+```bash
+ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'
+```
+
+Check `pmset -g assertions | grep UserIsActive` to confirm live input.
+Side effect of the front-mode fix above: the AUT floats over the user's
+fullscreen apps during runs — warn them.
 
 ## Resolve the app by path, never by bundle ID
 
 `NSWorkspace.urlForApplication(withBundleIdentifier:)` can resolve to a
 **stale build** in another DerivedData checkout (parallel worktree builds
-each register a copy). In tests, derive the path from the runner:
-`Bundle(for: TestClass.self).bundleURL` → up 3 levels (PlugIns → Runner.app
-→ Products) → `MyApp.app`.
+each register a copy — a "passing" run may be exercising outdated code).
+In tests, derive the path from the runner bundle: start at
+`Bundle(for: TestClass.self).bundleURL` (…/Runner.app/Contents/PlugIns/X.xctest —
+note the easy-to-forget `Contents/`) and walk **up one level at a time,
+probing for `MyApp.app`** rather than hardcoding a level count. When a
+worktree batch is merged, delete its DerivedData and `lsregister -u` its
+app copies.
 
 ## Screenshots without Screen Recording permission
 
@@ -69,6 +119,10 @@ after launch — `app.screenshot()` is more forgiving.
   delete the `-wal` and `-shm` sidecars too or SQLite resurrects old rows.
 - Seed flag (`--myapp-seed`) inserting fixtures when the store is empty —
   gives E2E stable data (e.g. an overdue item) and demo screenshots.
+- Call `try context.save()` explicitly after every user mutation. Autosave
+  alone loses the last edit when the app is terminated immediately after —
+  found by a persistence E2E test (`terminate()` → relaunch → record gone),
+  and equally real for a user who quits right after editing.
 
 ## Misc
 
@@ -78,5 +132,9 @@ after launch — `app.screenshot()` is more forgiving.
   an automation-spawned app proves nothing.
 - Verify shutdown scripts with SIGTERM, not SIGINT — background jobs in
   non-interactive shells ignore SIGINT, so your orphan test lies.
+- SwiftUI List rows removed by live filtering can leave a **stale AX node**:
+  `element.exists` stays true after the row visually disappears. Assert
+  `hittable == false` (or `exists == false OR hittable == false`) for
+  filtered-out rows; keep `exists` checks for genuinely deleted records.
 - Parallel worktree builds: unregister/delete their DerivedData copies
   when done (`lsregister -u`), or LS keeps offering them.

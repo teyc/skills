@@ -187,6 +187,7 @@ later — keep events small and machine-readable.
 {"t":"2026-07-02T10:22:07Z","event":"retry","task":"T007","retries":1,"signature":"users.spec.ts::AC-02 / assertion","cause":"switch DTO mapper to generic — missing @example on createdAt"}
 {"t":"2026-07-02T10:24:00Z","event":"review_cycle","task":"T007","cycles":1,"cause":"glossary drift: JobOrder → WorkOrder"}
 {"t":"2026-07-02T10:25:10Z","event":"redirect","task":"T008","to":"T002-DOCKER","cause":"2× env failure: postgres container not up"}
+{"t":"2026-07-02T10:25:58Z","event":"env_fix","task":"T002-DOCKER","attempt":1,"subsystem":"postgres","hypothesis":"volume perms after compose down -v","result":"no — same error"}
 {"t":"2026-07-02T10:26:44Z","event":"pass","task":"T007","retries":1}
 {"t":"2026-07-02T11:02:10Z","event":"entropy_checkpoint","n":1,"changes":3}
 {"t":"2026-07-02T11:40:00Z","event":"escalate","task":"T009","reason":"stall: same signature on attempts 1-2"}
@@ -195,9 +196,18 @@ later — keep events small and machine-readable.
 
 **Rules:**
 - Event vocabulary: `phase_start`, `task_start`, `pass`, `fail`, `retry`,
-  `review_cycle`, `redirect`, `escalate`, `entropy_checkpoint`,
+  `review_cycle`, `redirect`, `env_fix`, `escalate`, `entropy_checkpoint`,
   `abstraction_introduced`, `exit`. Unknown fields are allowed; unknown events
   are not.
+- One `env_fix` event per environment-fix attempt, carrying `subsystem`, a
+  one-line `hypothesis`, and `result`. These attempts consume no `Retries`, so
+  without their own events the costliest stretches of a run are invisible in
+  the trace (observed: a ~40-attempt, 2-hour detour that left two events).
+  The 5-attempts-per-subsystem cap in SKILL.md Step 10 is enforced by counting
+  these events.
+- Write events at the moment they happen, never batched at commit time —
+  batching collapses timestamps and destroys the wall-clock attribution the
+  traces exist to provide.
 - `abstraction_introduced` events name the extraction and its rung on the ladder
   (`config` / `generic` / `template`) — later checkpoints check whether it held up,
   which is how the generics-vs-duplication defaults get tuned from evidence.
