@@ -183,7 +183,7 @@ later — keep events small and machine-readable.
 
 ```jsonl
 {"t":"2026-07-02T10:14:02Z","event":"phase_start","phase":3}
-{"t":"2026-07-02T10:15:31Z","event":"task_start","task":"T007","batch":2,"agent":"subagent"}
+{"t":"2026-07-02T10:15:31Z","event":"task_start","task":"T007","batch":2,"agent":"subagent","model":"sonnet"}
 {"t":"2026-07-02T10:22:07Z","event":"retry","task":"T007","retries":1,"signature":"users.spec.ts::AC-02 / assertion","cause":"switch DTO mapper to generic — missing @example on createdAt"}
 {"t":"2026-07-02T10:24:00Z","event":"review_cycle","task":"T007","cycles":1,"cause":"glossary drift: JobOrder → WorkOrder"}
 {"t":"2026-07-02T10:25:10Z","event":"redirect","task":"T008","to":"T002-DOCKER","cause":"2× env failure: postgres container not up"}
@@ -204,6 +204,9 @@ later — keep events small and machine-readable.
 - Every `retry` event carries a `signature` (failing test + error class) — stall
   detection compares consecutive signatures, so keep the format stable — and a
   `cause` stating what the next attempt will do differently.
+- `task_start` and `retry` events record the `model` used for that attempt, so
+  traces can answer whether cheap-tier subagents are actually cheaper once their
+  retries are counted.
 - `_traces/` is gitignored — traces never ship with the project. Copy them out
   before deleting a checkout if you want to keep them for analysis.
 - The parent agent is the only writer (same rule as `TASKS.md`).

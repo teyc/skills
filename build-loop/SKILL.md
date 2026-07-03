@@ -152,6 +152,14 @@ Read `TASKS.md`. Find the next batch where all preceding batches are done.
   substantial tasks (small tweaks run faster inline), cap concurrency at ~4, and
   give each subagent only its task's slice of context — never the whole
   conversation.
+- **Model selection**: run each subagent on the cheapest model that can pass the
+  task's acceptance criterion. Mechanical, well-specified tasks (scaffolding, DTOs,
+  config wiring, grid column configs) → fast/cheap tier (Haiku-class). Ordinary
+  implementation → mid tier (Sonnet-class). High-uncertainty or `critical-path`
+  tasks, code review (Step 11), and the entropy checkpoint (Step 13) → the
+  strongest available model. If a cheap-model attempt FAILs, upgrade the model for
+  the retry before spending a second attempt on the same tier. Record the model in
+  each `task_start` and `retry` trace event.
 - **In single-agent environments**: announce: "These tasks can run in parallel
   sessions: [list]". Then execute them one by one.
 
@@ -225,6 +233,9 @@ FAIL   T007 — missing field-level DTO examples
 2. **Stall check** — compare against the previous attempt's failure signature
    (failing test + error class). Same signature twice in a row → escalate
    immediately, even with budget remaining. More attempts won't help; a human might.
+   Exception: a model-tier upgrade resets the stall comparison (the retry counter
+   still counts) — the stall signal is the same failure on a model at least as
+   strong, not a cheap model failing twice.
 3. **Implementation failure** — increment `Retries`, then back to Step 8 with the
    verdict as context. The retry must state in one line what it will do differently
    (recorded as the trace `cause`); if there is nothing to do differently, escalate

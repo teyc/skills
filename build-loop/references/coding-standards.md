@@ -203,6 +203,13 @@ substantial tasks — a batch of small tweaks runs faster inline. Cap concurrenc
 ~4, and give each subagent only its task's slice of context (task entry, relevant
 SPEC.md sections, glossary, these standards), never the whole conversation.
 
+**Model tiering**: subagents default to a cost-effective model, not the parent's.
+Match tier to task uncertainty — cheap/fast for mechanical work, mid-tier for
+ordinary implementation, strongest model reserved for high-uncertainty tasks,
+code review, and entropy checkpoints. A FAIL on a cheap model upgrades the tier on
+retry; traces record the model per attempt, so whether cheap models are actually
+cheaper *after* retries is an answerable question.
+
 ---
 
 ## 6 · Acceptance criteria → Playwright E2E tests
