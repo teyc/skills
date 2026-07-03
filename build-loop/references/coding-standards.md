@@ -602,11 +602,12 @@ echo "   ✓"
 Don't hand-roll a design system. Start from tokens plus a stock component library;
 earn bespoke components through repetition, not upfront.
 
-**Tokens first.** The first UI task creates a single `tokens.css` (CSS custom
-properties: colour palette, spacing scale, radius, type scale). Every component and
-page consumes tokens — no hardcoded hex values or magic pixel sizes in component
-code. Wireframes in `plan/wireframes/` may link `tokens.css` once it exists, but
-stay framework-free.
+**Tokens first.** `tokens.css` (CSS custom properties: colour palette, spacing
+scale, radius, type scale) is born in `/design-session` when one was run —
+alongside `DESIGN.md`, which is law for look-and-feel. Otherwise the first UI
+task creates it with neutral defaults. Every component and page consumes tokens —
+no hardcoded hex values or magic pixel sizes in component code. Wireframes in
+`plan/wireframes/` may link `tokens.css` once it exists, but stay framework-free.
 
 **Default component library by stack** (record the choice in `SPEC.md §Tech
 constraints`):

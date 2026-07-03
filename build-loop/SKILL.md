@@ -42,7 +42,9 @@ Read the starting document in full. Extract and show the user:
 - **Core intent** — one sentence
 - **Constraints** — language, runtime, deployment target, existing codebase
 - **Delivery shape** — service(s), web app, CLI, library, or script. Determines
-  which mandatory tasks apply in Step 5.
+  which mandatory tasks apply in Step 5. If the shape includes a web UI and no
+  `DESIGN.md` exists, suggest running `/design-session` first — otherwise UI
+  tasks fall back to the neutral defaults in coding-standards §14.
 - **Client-server boundaries** — any API surface between services (flags OpenAPI need)
 - **Ambiguities** — things that could go in fundamentally different directions
 
@@ -114,7 +116,9 @@ from Step 1. If a row is skipped, record a one-line waiver with the reason in
 Schema tasks (`…-SCHEMA`) must be assigned IDs that precede all implementation tasks
 on either side of that boundary. Likewise, wireframe tasks (`…-WIREFRAME`) must
 precede all UI implementation tasks — each UI task names the wireframe file it
-realises (see `references/artefact-formats.md §plan/`).
+realises (see `references/artefact-formats.md §plan/`). When `DESIGN.md` and
+`tokens.css` exist (from `/design-session`), wireframes and UI tasks treat them
+as law — implementer taste does not override them.
 
 The `…-REGEN` task creates an empty `regenerate-all.sh` stub with the shebang and
 header. Every subsequent task that generates files must: (a) add a section to

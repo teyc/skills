@@ -1,0 +1,229 @@
+<!doctype html>
+<!-- design-session configurator TEMPLATE — adapt in Phase A:
+     replace entity/columns/fields with real domain content from SPEC.md/glossary.md.
+     Throwaway instrument; the exported tokens.css is the deliverable. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Session Configurator</title>
+<style>
+  :root {
+    --bg:#fafafa; --surface:#ffffff; --text:#1a1a1a; --text-muted:#6b7280;
+    --accent:#2563eb; --accent-contrast:#ffffff; --border:#e5e7eb;
+    --ok:#16a34a; --warn:#d97706; --danger:#dc2626;
+    --radius:6px; --space:8px; --shadow:0 1px 3px rgb(0 0 0 / .08);
+    --font-display:system-ui; --font-body:system-ui; --font-mono:ui-monospace;
+    --font-size:14px; --font-scale:1.2;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body {
+    background:var(--bg); color:var(--text);
+    font:var(--font-size)/1.5 var(--font-body);
+    transition:background .15s, color .15s;
+  }
+  h1,h2 { font-family:var(--font-display); }
+  h1 { font-size:calc(var(--font-size) * var(--font-scale) * var(--font-scale)); }
+  h2 { font-size:calc(var(--font-size) * var(--font-scale)); }
+
+  nav {
+    display:flex; align-items:center; gap:calc(var(--space)*2);
+    padding:calc(var(--space)*1.5) calc(var(--space)*3);
+    background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  nav .brand { font-family:var(--font-display); font-weight:700; }
+  nav a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:var(--radius); }
+  nav a.active { color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent); }
+  main { max-width:960px; margin:0 auto; padding:calc(var(--space)*3); }
+
+  .toolbar { display:flex; gap:var(--space); align-items:center; margin:calc(var(--space)*2) 0; flex-wrap:wrap; }
+  input,select,button,textarea {
+    font:inherit; color:inherit; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:calc(var(--space)*.75) var(--space);
+  }
+  button.primary { background:var(--accent); color:var(--accent-contrast); border-color:var(--accent); cursor:pointer; }
+  button.ghost { background:transparent; cursor:pointer; }
+  .chip { border:1px solid var(--accent); color:var(--accent); border-radius:calc(var(--radius)*3); padding:2px 10px; font-size:.85em; }
+
+  table { width:100%; border-collapse:collapse; background:var(--surface);
+          border:1px solid var(--border); border-radius:var(--radius);
+          box-shadow:var(--shadow); overflow:hidden; }
+  th,td { text-align:left; padding:calc(var(--space)*1.25) calc(var(--space)*1.5);
+          border-bottom:1px solid var(--border); }
+  th { color:var(--text-muted); font-weight:600; font-size:.85em; cursor:pointer; user-select:none; }
+  tr:hover td { background:color-mix(in srgb, var(--accent) 4%, transparent); }
+  td.mono { font-family:var(--font-mono); font-size:.9em; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:calc(var(--radius)*2);
+           font-size:.8em; font-weight:600; }
+  .badge.open    { background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); }
+  .badge.done    { background:color-mix(in srgb, var(--ok) 14%, transparent);     color:var(--ok); }
+  .badge.overdue { background:color-mix(in srgb, var(--danger) 14%, transparent); color:var(--danger); }
+  .pager { display:flex; gap:var(--space); justify-content:flex-end; padding:var(--space) 0; color:var(--text-muted); }
+
+  form.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+              box-shadow:var(--shadow); padding:calc(var(--space)*3);
+              display:grid; gap:calc(var(--space)*2); max-width:560px; }
+  form label { display:grid; gap:calc(var(--space)*.5); font-weight:600; font-size:.9em; }
+  form .error input { border-color:var(--danger); }
+  form .error .msg { color:var(--danger); font-weight:400; font-size:.85em; }
+  form .actions { display:flex; gap:var(--space); justify-content:flex-end; }
+
+  #panel { position:fixed; right:16px; bottom:16px; width:280px; background:var(--surface);
+           border:1px solid var(--border); border-radius:var(--radius);
+           box-shadow:0 8px 30px rgb(0 0 0 / .25); font-size:13px; z-index:9; }
+  #panel header { display:flex; justify-content:space-between; align-items:center;
+                  padding:8px 12px; border-bottom:1px solid var(--border); cursor:pointer; }
+  #panel .body { padding:12px; display:grid; gap:10px; }
+  #panel.min .body { display:none; }
+  #presets { display:flex; flex-wrap:wrap; gap:6px; }
+  #presets button { padding:3px 8px; font-size:12px; cursor:pointer; }
+  #panel .row { display:grid; grid-template-columns:88px 1fr; align-items:center; gap:8px; }
+  #panel input[type=range] { padding:0; }
+  #panel input[type=color] { padding:0; height:24px; }
+  #export-out { display:none; white-space:pre; overflow:auto; max-height:180px;
+                background:var(--bg); border:1px solid var(--border);
+                font-family:var(--font-mono); font-size:11px; padding:8px; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">Acme Ops</span><!-- ADAPT: product name -->
+  <a href="?screen=grid" id="tab-grid">Work Orders</a>
+  <a href="?screen=form" id="tab-form">New Work Order</a>
+</nav>
+
+<main id="screen-grid">
+  <h1>Work Orders</h1><!-- ADAPT: real entity -->
+  <div class="toolbar">
+    <input type="search" placeholder="Search work orders…" style="flex:1">
+    <span class="chip">Status: Open ✕</span>
+    <select><option>Columns…</option></select>
+    <button class="ghost">Export CSV</button>
+    <button class="primary">New Work Order</button>
+  </div>
+  <table>
+    <thead><tr><th>ID ↕</th><th>Title ↕</th><th>Assignee</th><th>Due ↕</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody id="rows"></tbody><!-- populated by JS below; ADAPT columns -->
+  </table>
+  <div class="pager"><span>1–10 of 43</span><button class="ghost">‹</button><button class="ghost">›</button></div>
+</main>
+
+<main id="screen-form" hidden>
+  <h1>New Work Order</h1>
+  <form class="card" onsubmit="return false">
+    <h2>Details</h2>
+    <label>Title <input value="Replace pump seal — Bay 4"></label>
+    <label>Assignee <select><option>Dana Wu</option><option>Sam Patel</option></select></label>
+    <label class="error">Due date <input value="32/13/2026"><span class="msg">Enter a valid date (yyyy-mm-dd)</span></label>
+    <label>Amount (AUD) <input value="4999"></label>
+    <label>Priority <select><option>Normal</option><option>Critical</option></select></label>
+    <label>Notes <textarea rows="3">Seal kit on order; site access after 2pm.</textarea></label>
+    <div class="actions"><button class="ghost">Cancel</button><button class="primary">Create</button></div>
+  </form>
+</main>
+
+<div id="panel">
+  <header onclick="panel.classList.toggle('min')"><strong>Theme</strong><span id="preset-name">neutral-start</span></header>
+  <div class="body">
+    <div id="presets"></div>
+    <div class="row"><span>Radius</span><input type="range" id="r-radius" min="0" max="16" step="1"></div>
+    <div class="row"><span>Density</span><input type="range" id="r-space" min="4" max="14" step="1"></div>
+    <div class="row"><span>Text size</span><input type="range" id="r-font" min="12" max="17" step="1"></div>
+    <div class="row"><span>Accent</span><input type="color" id="c-accent"></div>
+    <div class="row"><span>Type pair</span><select id="s-fonts">
+      <option value="system-ui|system-ui">System / System</option>
+      <option value="Georgia,serif|system-ui">Serif display / System</option>
+      <option value='"Inter",system-ui|"Inter",system-ui'>Inter / Inter</option>
+      <option value="ui-monospace,monospace|ui-monospace,monospace">Mono / Mono</option>
+      <option value='"Helvetica Neue",Arial,sans-serif|"Helvetica Neue",Arial,sans-serif'>Grotesk / Grotesk</option>
+    </select></div>
+    <button class="primary" id="export">Export tokens.css</button>
+    <pre id="export-out"></pre>
+  </div>
+</div>
+
+<script>
+// ADAPT: keep presets in sync with references/presets.md (every key in every preset).
+const TOKENS = ["bg","surface","text","text-muted","accent","accent-contrast","border",
+  "ok","warn","danger","radius","space","shadow","font-display","font-body","font-mono",
+  "font-size","font-scale"];
+const PRESETS = {
+  "neutral-start":{bg:"#fafafa",surface:"#ffffff",text:"#1a1a1a","text-muted":"#6b7280",accent:"#2563eb","accent-contrast":"#ffffff",border:"#e5e7eb",ok:"#16a34a",warn:"#d97706",danger:"#dc2626",radius:"6px",space:"8px",shadow:"0 1px 3px rgb(0 0 0 / .08)","font-display":"system-ui","font-body":"system-ui","font-mono":"ui-monospace","font-size":"14px","font-scale":"1.2"},
+  "linear-dark":{bg:"#0e0f13",surface:"#16171d",text:"#e6e7eb","text-muted":"#8a8f98",accent:"#5e6ad2","accent-contrast":"#ffffff",border:"#26282f",ok:"#4cb782",warn:"#d4a72c",danger:"#eb5757",radius:"8px",space:"6px",shadow:"0 2px 8px rgb(0 0 0 / .45)","font-display":'"Inter",system-ui',"font-body":'"Inter",system-ui',"font-mono":'"JetBrains Mono",monospace',"font-size":"13px","font-scale":"1.15"},
+  "notion-calm":{bg:"#f7f6f3",surface:"#ffffff",text:"#37352f","text-muted":"#9b9a97",accent:"#2e6ad1","accent-contrast":"#ffffff",border:"#e9e7e3",ok:"#448361",warn:"#c77d2e",danger:"#d44c47",radius:"4px",space:"10px",shadow:"0 1px 2px rgb(0 0 0 / .06)","font-display":"Georgia,serif","font-body":"system-ui","font-mono":"ui-monospace","font-size":"15px","font-scale":"1.25"},
+  "terminal-dense":{bg:"#101214",surface:"#16191c",text:"#d6dbe1","text-muted":"#7d8590",accent:"#e3b341","accent-contrast":"#101214",border:"#2b3138",ok:"#3fb950",warn:"#d29922",danger:"#f85149",radius:"2px",space:"5px",shadow:"none","font-display":"ui-monospace,monospace","font-body":"ui-monospace,monospace","font-mono":"ui-monospace,monospace","font-size":"13px","font-scale":"1.1"},
+  "gov-service":{bg:"#ffffff",surface:"#ffffff",text:"#0b0c0c","text-muted":"#505a5f",accent:"#1d70b8","accent-contrast":"#ffffff",border:"#b1b4b6",ok:"#00703c",warn:"#f47738",danger:"#d4351c",radius:"0px",space:"10px",shadow:"none","font-display":"system-ui","font-body":"system-ui","font-mono":"ui-monospace","font-size":"16px","font-scale":"1.3"},
+  "swiss-print":{bg:"#ffffff",surface:"#ffffff",text:"#111111","text-muted":"#767676",accent:"#e0301e","accent-contrast":"#ffffff",border:"#111111",ok:"#1f7a33",warn:"#b7791f",danger:"#e0301e",radius:"0px",space:"8px",shadow:"none","font-display":'"Helvetica Neue",Arial,sans-serif',"font-body":'"Helvetica Neue",Arial,sans-serif',"font-mono":"ui-monospace","font-size":"14px","font-scale":"1.333"},
+  "soft-fintech":{bg:"#f4f7f5",surface:"#ffffff",text:"#0f2e24","text-muted":"#5f7169",accent:"#0d6e4f","accent-contrast":"#ffffff",border:"#dde5e0",ok:"#0d6e4f",warn:"#b7791f",danger:"#b3261e",radius:"12px",space:"10px",shadow:"0 2px 10px rgb(13 110 79 / .08)","font-display":'"Inter",system-ui',"font-body":'"Inter",system-ui',"font-mono":"ui-monospace","font-size":"14px","font-scale":"1.25"},
+  "industrial-slate":{bg:"#eef1f4",surface:"#ffffff",text:"#1c2733","text-muted":"#5c6b7a",accent:"#c75300","accent-contrast":"#ffffff",border:"#cfd8e0",ok:"#2e7d32",warn:"#c75300",danger:"#c62828",radius:"3px",space:"7px",shadow:"0 1px 2px rgb(28 39 51 / .12)","font-display":"system-ui","font-body":"system-ui","font-mono":"ui-monospace","font-size":"14px","font-scale":"1.2"},
+};
+
+// ADAPT: realistic rows from the real domain
+const ROWS = [
+  ["WO-1042","Replace pump seal — Bay 4","Dana Wu","2026-07-08","4,999","open"],
+  ["WO-1041","Quarterly HVAC inspection","Sam Patel","2026-07-05","1,200","overdue"],
+  ["WO-1040","Forklift battery swap","Lee Chen","2026-07-04","350","done"],
+  ["WO-1039","Dock door sensor fault","Dana Wu","2026-07-11","780","open"],
+  ["WO-1038","Repaint loading zone lines","—","2026-07-15","2,050","open"],
+  ["WO-1037","Compressor vibration check","Sam Patel","2026-07-03","640","done"],
+  ["WO-1036","Emergency light test","Lee Chen","2026-07-02","210","done"],
+  ["WO-1035","Roof leak — aisle 7","Dana Wu","2026-07-01","3,400","overdue"],
+];
+rows.innerHTML = ROWS.map(r =>
+  `<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td>
+   <td class="mono">${r[3]}</td><td class="mono">${r[4]}</td>
+   <td><span class="badge ${r[5]}">${r[5]}</span></td></tr>`).join("");
+
+const root = document.documentElement;
+const get = t => getComputedStyle(root).getPropertyValue("--"+t).trim();
+const set = (t,v) => root.style.setProperty("--"+t, v);
+
+function applyPreset(name){
+  const p = PRESETS[name]; if(!p) return;
+  TOKENS.forEach(t => set(t, p[t]));
+  document.getElementById("preset-name").textContent = name;
+  syncControls();
+  history.replaceState(null,"", "?screen="+currentScreen+"&preset="+name);
+}
+function syncControls(){
+  document.getElementById("r-radius").value = parseInt(get("radius"))||0;
+  document.getElementById("r-space").value  = parseInt(get("space"))||8;
+  document.getElementById("r-font").value   = parseInt(get("font-size"))||14;
+  try { document.getElementById("c-accent").value = get("accent"); } catch(e){}
+}
+Object.keys(PRESETS).forEach((name,i) => {
+  const b = document.createElement("button");
+  b.textContent = (i+1)+" "+name; b.onclick = () => applyPreset(name);
+  document.getElementById("presets").appendChild(b);
+});
+document.addEventListener("keydown", e => {
+  if (/^[1-9]$/.test(e.key) && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) {
+    const n = Object.keys(PRESETS)[+e.key-1]; if(n) applyPreset(n);
+  }
+});
+["r-radius:radius:px","r-space:space:px","r-font:font-size:px"].forEach(spec => {
+  const [id,t,u] = spec.split(":");
+  document.getElementById(id).oninput = e => set(t, e.target.value+u);
+});
+document.getElementById("c-accent").oninput = e => set("accent", e.target.value);
+document.getElementById("s-fonts").onchange = e => {
+  const [d,b] = e.target.value.split("|"); set("font-display",d); set("font-body",b);
+};
+document.getElementById("export").onclick = () => {
+  const css = ":root {\n" + TOKENS.map(t => `  --${t}: ${get(t)};`).join("\n") + "\n}\n";
+  const out = document.getElementById("export-out");
+  out.textContent = css; out.style.display = "block";
+  navigator.clipboard?.writeText(css);
+};
+
+// screen + preset from URL
+const q = new URLSearchParams(location.search);
+const currentScreen = q.get("screen") === "form" ? "form" : "grid";
+document.getElementById("screen-grid").hidden = currentScreen !== "grid";
+document.getElementById("screen-form").hidden = currentScreen !== "form";
+document.getElementById("tab-"+currentScreen).classList.add("active");
+applyPreset(q.get("preset") || "neutral-start");
+</script>
+</body>
+</html>
