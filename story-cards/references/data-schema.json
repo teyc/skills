@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skills.local/story-cards/data-schema.json",
+  "title": "Story cards review bundle",
+  "type": "object",
+  "required": ["schema_version", "project", "business_case", "sources", "assumptions", "questions", "dependencies", "people", "tasks"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "project": {
+      "type": "object",
+      "required": ["name", "generated_at", "status"],
+      "properties": {
+        "name": {"type": "string"},
+        "reference": {"type": ["string", "null"]},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["draft", "for_review", "approved", "superseded"]},
+        "revision": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "business_case": {
+      "type": "object",
+      "required": ["id", "title", "summary", "problem", "users_affected", "outcome", "recommendation", "options", "benefits", "costs", "risks", "operational_implications", "success_measures", "decision_needed"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "summary": {"type": "string"},
+        "problem": {"type": "string"},
+        "users_affected": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "outcome": {"type": "string"},
+        "recommendation": {"type": ["string", "null"]},
+        "options": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "benefits": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "costs": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "risks": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "operational_implications": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "success_measures": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+        "decision_needed": {"type": "array", "items": {"$ref": "#/$defs/question"}},
+        "poc_production_boundary": {"type": ["string", "null"]},
+        "task_ids": {"type": "array", "items": {"type": "string"}},
+        "source_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "assumptions": {"type": "array", "items": {"$ref": "#/$defs/assumption"}},
+    "questions": {"type": "array", "items": {"$ref": "#/$defs/question"}},
+    "dependencies": {"type": "array", "items": {"$ref": "#/$defs/dependency"}},
+    "people": {"type": "array", "items": {"$ref": "#/$defs/person"}},
+    "tasks": {"type": "array", "items": {"$ref": "#/$defs/task"}}
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["id", "reference", "kind", "date", "summary"],
+      "properties": {
+        "id": {"type": "string"},
+        "reference": {"type": "string", "description": "Project-relative path plus heading, page, row, timestamp or message ID."},
+        "kind": {"enum": ["conversation", "decision", "requirement", "research", "code", "test", "other"]},
+        "date": {"type": ["string", "null"]},
+        "speaker": {"type": ["string", "null"]},
+        "quote": {"type": ["string", "null"]},
+        "summary": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "statement": {
+      "type": "object",
+      "required": ["text", "evidence", "status"],
+      "properties": {
+        "text": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "status": {"enum": ["evidenced", "assumption", "recommendation", "unknown"]}
+      },
+      "additionalProperties": false
+    },
+    "assumption": {
+      "type": "object",
+      "required": ["id", "text", "status", "basis", "consequence_if_wrong", "resolution", "linked_ids"],
+      "properties": {
+        "id": {"type": "string"},
+        "text": {"type": "string"},
+        "status": {"type": "string", "description": "Preserve the project's status vocabulary where it has one."},
+        "basis": {"type": "array", "items": {"type": "string"}},
+        "consequence_if_wrong": {"type": ["string", "null"]},
+        "resolution": {"type": ["string", "null"]},
+        "verifier": {"type": ["string", "null"]},
+        "verified_at": {"type": ["string", "null"]},
+        "linked_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "question", "why_it_matters", "next_step", "status", "source_ids", "linked_ids"],
+      "properties": {
+        "id": {"type": "string"},
+        "question": {"type": "string"},
+        "why_it_matters": {"type": "string"},
+        "next_step": {"type": ["string", "null"]},
+        "status": {"enum": ["needs_discussion", "needs_analysis", "answered", "deferred"]},
+        "source_ids": {"type": "array", "items": {"type": "string"}},
+        "linked_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "dependency": {
+      "type": "object",
+      "required": ["id", "name", "kind", "description", "status", "owner", "linked_ids", "source_ids"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "kind": {"enum": ["third_party_system", "security_review", "penetration_test", "privacy_review", "data", "access", "procurement", "decision", "other"]},
+        "description": {"type": "string"},
+        "status": {"type": "string"},
+        "owner": {"type": ["string", "null"]},
+        "linked_ids": {"type": "array", "items": {"type": "string"}},
+        "source_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "person": {
+      "type": "object",
+      "required": ["id", "name", "relevance", "evidence", "suggested_question", "contact_status"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "role": {"type": ["string", "null"]},
+        "relevance": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "suggested_question": {"type": ["string", "null"]},
+        "contact_status": {"enum": ["not_contacted", "contacted", "available", "unknown"]}
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "required": ["id", "title", "story", "context", "scope", "status", "readiness", "confidence", "dependencies", "acceptance_criteria", "test_cases", "diagrams", "source_ids", "assumption_ids", "question_ids", "business_case_id"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "story": {"type": "string", "description": "As a …, I want …, so that …"},
+        "context": {"type": "string"},
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "status": {"type": "string"},
+        "readiness": {"enum": ["ready", "needs_discussion", "needs_analysis", "blocked"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "dependencies": {"type": "array", "items": {"type": "string"}},
+        "acceptance_criteria": {"type": "array", "items": {"$ref": "#/$defs/criterion"}},
+        "test_cases": {"type": "array", "items": {"$ref": "#/$defs/test_case"}},
+        "diagrams": {"type": "array", "items": {"$ref": "#/$defs/diagram"}},
+        "source_ids": {"type": "array", "items": {"type": "string"}},
+        "assumption_ids": {"type": "array", "items": {"type": "string"}},
+        "question_ids": {"type": "array", "items": {"type": "string"}},
+        "business_case_id": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "criterion": {
+      "type": "object",
+      "required": ["id", "given", "when", "then", "test_case_ids"],
+      "properties": {
+        "id": {"type": "string"},
+        "given": {"type": "string"},
+        "when": {"type": "string"},
+        "then": {"type": "string"},
+        "test_case_ids": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "test_case": {
+      "type": "object",
+      "required": ["id", "criterion_id", "scenario", "expected_result"],
+      "properties": {
+        "id": {"type": "string"},
+        "criterion_id": {"type": "string"},
+        "scenario": {"type": "string"},
+        "expected_result": {"type": "string"},
+        "type": {"enum": ["acceptance", "unit", "integration", "security", "accessibility", "operational", "other"]}
+      },
+      "additionalProperties": false
+    },
+    "diagram": {
+      "type": "object",
+      "required": ["kind", "source", "format"],
+      "properties": {
+        "kind": {"enum": ["sequence", "entity", "flow", "other"]},
+        "format": {"enum": ["mermaid", "plantuml", "svg", "other"]},
+        "source": {"type": "string"},
+        "caption": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

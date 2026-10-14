@@ -1,0 +1,38 @@
+@page { size: A4; margin: 18mm 17mm 20mm; @top-left { content: "PROJECT WORK PACKAGE"; font: 7pt sans-serif; color: #64748b; } @top-right { content: string(project); font: 7pt sans-serif; color: #64748b; } @bottom-left { content: "Draft for review"; font: 7pt sans-serif; color: #64748b; } @bottom-right { content: counter(page); font: 8pt sans-serif; color: #0f172a; } }
+* { box-sizing: border-box; }
+body { margin: 0; color: #182536; font: 10pt/1.5 Arial, sans-serif; }
+h1,h2,h3 { color: #10263d; line-height: 1.2; }
+h1 { font-size: 27pt; margin: 0 0 12mm; }
+h2 { font-size: 17pt; margin: 0 0 5mm; padding-bottom: 2mm; border-bottom: 1px solid #cbd5e1; }
+h3 { font-size: 11pt; margin: 5mm 0 2mm; }
+p { margin: 0 0 3mm; }
+.cover { min-height: 245mm; padding: 22mm 16mm; background: #10263d; color: white; display:flex; flex-direction:column; justify-content:space-between; page-break-after:always; }
+.cover .kicker { color:#f2b84b; text-transform:uppercase; letter-spacing:.14em; font-size:9pt; }
+.cover h1 { color:white; font-size:32pt; max-width:155mm; }
+.cover .subtitle { color:#dbe4ed; font-size:14pt; max-width:145mm; }
+.cover .rule { width:32mm; border-top:3px solid #f2b84b; margin:12mm 0; }
+.meta { display:grid; grid-template-columns:1fr 1fr; gap:4mm; font-size:9pt; }
+.meta div { border-top:1px solid #557086; padding-top:2mm; }
+.meta b { display:block; color:#f2b84b; font-size:7pt; text-transform:uppercase; letter-spacing:.08em; }
+.project-name { string-set: project content(); }
+.section { margin:0 0 12mm; }
+.lede { font-size:14pt; color:#334155; }
+.callout { border-left:3px solid #e2a93b; background:#fff8e9; padding:4mm 5mm; margin:4mm 0; }
+.status { display:inline-block; border:1px solid #d5a538; border-radius:2mm; padding:1mm 2.5mm; color:#694c05; background:#fff8e9; font-size:8pt; font-weight:bold; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3mm; }
+.card { min-width:0; border:1px solid #d7dee7; padding:4mm; break-inside:avoid; }
+.card p,.card li { overflow-wrap:anywhere; }
+ul,ol { margin:1mm 0 3mm; padding-left:5mm; }
+li { margin:0 0 1.5mm; }
+table { border-collapse:collapse; width:100%; margin:3mm 0; font-size:9pt; }
+th { text-align:left; background:#eaf0f5; color:#20374c; }
+td,th { border-bottom:1px solid #d5dde6; padding:2mm; vertical-align:top; overflow-wrap:anywhere; }
+.task { page-break-before:always; }
+.task-head { display:flex; justify-content:space-between; align-items:flex-start; gap:5mm; }
+.task-id { color:#b17b19; font-weight:bold; font-size:9pt; }
+.story { font-size:12pt; color:#334155; border-left:2px solid #8095a8; padding-left:4mm; margin:4mm 0; }
+.diagram { padding:3mm; border:1px solid #d5dde6; background:#f7f9fb; white-space:pre-wrap; overflow-wrap:anywhere; font:8pt/1.35 ui-monospace,monospace; }
+.small { color:#526477; font-size:8pt; }
+.muted { color:#526477; }
+.page-break { page-break-before:always; }
+svg { max-width:100%; height:auto; }
